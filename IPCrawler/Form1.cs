@@ -44,6 +44,15 @@ namespace IPCrawler
                 MessageBox.Show(exception.Message);
                 return;
             }
+            //read IPs
+            string[] lines = System.IO.File.ReadAllLines(inputFilePathTextBox.Text);
+            string[] ipArray = new string[lines.Length];
+            for (int i = 0; i < lines.Length; i++)
+            {
+                ipArray[i] = lines[i].Split('-').First().Trim();
+            }
+            //get ip data
+            //generate csv
 
         }
 
