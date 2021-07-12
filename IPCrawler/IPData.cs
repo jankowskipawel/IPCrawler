@@ -6,22 +6,17 @@ using System.Threading.Tasks;
 
 namespace IPCrawler
 {
-    class IPData
+    public class IPData
     {
-        public string Status { get; set; }
-        public string Country { get; set; }
-        public string CountryCode { get; set; }
-        public string Region { get; set; }
-        public string RegionName { get; set; }
-        public string City { get; set; }
-        public string Zip { get; set; }
-        public string Lat { get; set; }
-        public string Lon { get; set; }
-        public string Timezone { get; set; }
-        public string Isp { get; set; }
-        public string Org { get; set; }
-        public string As { get; set; }
-        public string Query { get; set; }
-
+        public string status { get; set; }
+        public string country { get; set; }
+        public string regionName { get; set; }
+        public string city { get; set; }
+        public string zip { get; set; }
+        public float lat { get; set; }
+        public float lon { get; set; }
+        public string isp { get; set; }
+        public string query { get; set; }
     }
+
 }
