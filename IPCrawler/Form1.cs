@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net;
@@ -10,6 +11,7 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CsvHelper;
 
 namespace IPCrawler
 {
@@ -48,14 +50,56 @@ namespace IPCrawler
             }
             //read IPs
             string[] lines = System.IO.File.ReadAllLines(inputFilePathTextBox.Text);
+            if (lines.Length > 1500)
+            {
+                MessageBox.Show(
+                    "WARNING! Selected file has more than 1500 records. Only first 1500 IPs will be checked.");
+            }
             string[] ipArray = new string[lines.Length];
             for (int i = 0; i < lines.Length; i++)
             {
                 ipArray[i] = lines[i].Split('-').First().Trim();
             }
-            List<IPData> IPObjects = ConvertIPStringsToObjects(ipArray);
+            //count hits
+            Dictionary<string, int> numberOfHits = CountHits(ipArray);
+            List<IPData> IPObjects = ConvertIPStringsToObjects(ipArray.Distinct().ToArray());
             //generate csv
+            SaveToCsv(IPObjects, numberOfHits);
+        }
 
+        public Dictionary<string, int> CountHits(string[] ipArray)
+        {
+            Dictionary<string, int> numberOfHits = new Dictionary<string, int>();
+            foreach (var ip in ipArray)
+            {
+                if (numberOfHits.ContainsKey(ip))
+                {
+                    numberOfHits[ip]++;
+                }
+                else
+                {
+                    numberOfHits.Add(ip, 1);
+                }
+            }
+            return numberOfHits;
+        }
+
+        public void SaveToCsv(List<IPData> IPObjects, Dictionary<string, int> numberOfHits)
+        {
+            DateTime date = DateTime.Now;
+            using (var writer = new StreamWriter(outputFolderPathTextBox.Text + $"\\{date.ToString("yyyyMMdd_hhmmss")}.csv"))
+            using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+            {
+                csv.WriteHeader<CsvIPDataModel>();
+                csv.NextRecord();
+                foreach (var ip in IPObjects)
+                {
+                    string geolocation = $"{ip.country}, {ip.regionName}, {ip.city}, {ip.zip}, {ip.lat} {ip.lon}";
+                    CsvIPDataModel record = new CsvIPDataModel(ip.query, geolocation, ip.isp, numberOfHits[ip.query]);
+                    csv.WriteRecord(record);
+                    csv.NextRecord();
+                }
+            }
         }
 
         public List<IPData> ConvertIPStringsToObjects(string[] ipArray)
