@@ -53,24 +53,40 @@ namespace IPCrawler
             {
                 ipArray[i] = lines[i].Split('-').First().Trim();
             }
-            int j = 0;
-            //split array every 100 elements
-            var query = from s in ipArray
-                        let num = j++
-                group s by num / 100 into g
-                select g.ToArray();
-            var ipArrays = query.ToArray();
+            List<IPData> IPObjects = ConvertIPStringsToObjects(ipArray);
+            //generate csv
+
+        }
+
+        public List<IPData> ConvertIPStringsToObjects(string[] ipArray)
+        {
+            //split array every 100 elements (because api limits)
+            var ipArrays = SplitArrayEachNElements(ipArray, 100);
             //get ip data
-            List<string> ipData = new List<string>(lines.Length);
+            List<string> jsonIPData = new List<string>(ipArray.Length);
             foreach (var ipArr in ipArrays)
             {
                 string apiString = CreateApiString(ipArr);
-                ipData = GetIPData(apiString, ipData);
+                jsonIPData = GetIPDataFromAPI(apiString, jsonIPData);
             }
 
-            inputFilePathTextBox.Text = ipData[0];
-            //generate csv
+            List<IPData> ipData = new List<IPData>(ipArray.Length);
+            foreach (var jsonIP in jsonIPData)
+            {
+                IPData ipd = JsonSerializer.Deserialize<IPData>(jsonIP);
+                ipData.Add(ipd);
+            }
+            return ipData;
+        }
 
+        public string[][] SplitArrayEachNElements(string[] array, int n)
+        {
+            int i = 0;
+            var query = from s in array
+                        let num = i++
+                group s by num / n into g
+                select g.ToArray();
+            return query.ToArray();
         }
 
         public string CreateApiString(string[] ipArray)
@@ -85,7 +101,7 @@ namespace IPCrawler
             return apiString;
         }
 
-        public List<string> GetIPData(string apiString, List<string> ipDataList)
+        public List<string> GetIPDataFromAPI(string apiString, List<string> ipDataList)
         {
             string[] ipData = new string[100];
             using (WebClient wc = new WebClient())
